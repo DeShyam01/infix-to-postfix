@@ -78,7 +78,10 @@ node* pop(node** top){
 	if(isEmpty(*top)){
 		return NULL;
 	}
+	
 	node* popedNode = (*top);
+	popedNode->next = NULL;
+	
 	(*top)=(*top)->next;
 	
 	return popedNode;
@@ -126,7 +129,7 @@ void infixInput(node** head){
 	int turn=0;
 	int opd;
 	char opt;
-	appendOpt(head, '(');
+	append(head, createCharNode('('));
 	while(opt!='\n'){
 		if(turn==0){
 			printf("opd: ");
@@ -140,37 +143,53 @@ void infixInput(node** head){
 			if(opt=='+' || opt=='-' || opt=='*' || opt=='/' || opt=='(' || opt==')'){
 				append(head, createCharNode(opt));
 				turn=0;
-			}else{
-				printf("\n%c is not a valid operator\n", opt);
 			}
 		}
 		printf("\n");
 	}
-	appendOpt(head, ')');
+	append(head, createCharNode(')'));
 }
 
 /* --- postfix conversion function --- */
 
 node* postfix(node* infixHead){
-	node* curr = infixHead;	//holds infix expression	
 	node* stackTop = NULL;	//holds operator temporarily
-	node* expressionTop = NULL;	//holds the main postfix expression
+	node* expressionHead = NULL;	//holds the main postfix expression
 	
+	node* curr = infixHead;
+
 	while(curr!=NULL){
 		if(curr->type==0){
-			push(&expressionTop, curr->element.opd);
+			/* --- Pushing operands into the expressionHead --- */
+			append(&expressionHead, createIntNode(curr->element.opd));
 		}else if(curr->type==1){
 			if(curr->element.opt.symbol=='('){
+				/* --- Pushing left paranthesis into stackTop --- */
 				push(&stackTop, createCharNode(curr->element.opt.symbol));
 			}else if(curr->element.opt.symbol==')'){
-				node* temp = (*stackTop);
-				while(temp->element.opt.precedence!='('){
-					push(&expressionTop, pop(&stackTop));
-					temp=temp->next;
+				/* --- Popping from stackTop and pushing to expressionHead until left paranthesis --- */
+				
+				while(stackTop!=NULL && stackTop->element.opt.symbol!='('){
+					append(&expressionHead, pop(&stackTop));
 				}
+
+				free(pop(&stackTop));		/* --- left paranthesis removed  --- */
+			}else{
+				while(stackTop!=NULL && stackTop->element.opt.precedence>=curr->element.opt.precedence){
+					append(&expressionHead, pop(&stackTop));
+				}
+				push(&stackTop, createCharNode(curr->element.opt.symbol));
 			}
 		}
+		curr=curr->next;
 	}
+	
+	while(stackTop != NULL){
+    	append(&expressionHead, pop(&stackTop));
+	}
+
+	
+	return expressionHead;
 }
 
 int main(){
@@ -182,6 +201,8 @@ int main(){
 	display(infixHead);					/* --- displaying the infix expression --- */
 	
 	postfixTop = postfix(infixHead);	/* --- converting to postfix expression --- */
+
+	display(postfixTop);
 	
 	return 0;
 }
