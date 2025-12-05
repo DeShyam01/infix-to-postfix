@@ -30,9 +30,9 @@ int precedence(int opt){
 		case '*':
 			return 2;
 		case '/':
-			return 3;
+			return 2;
 		case '^':
-			return 4;
+			return 3;
 	}
 	
 	return -1;
@@ -80,9 +80,9 @@ node* pop(node** top){
 	}
 	
 	node* popedNode = (*top);
-	popedNode->next = NULL;
-	
 	(*top)=(*top)->next;
+	
+	popedNode->next = NULL;
 	
 	return popedNode;
 }
@@ -160,12 +160,10 @@ node* postfix(node* infixHead){
 
 	while(curr!=NULL){
 		if(curr->type==0){
-			/* --- Pushing operands into the expressionHead --- */
-			append(&expressionHead, createIntNode(curr->element.opd));
+			append(&expressionHead, createIntNode(curr->element.opd));	/* --- Pushing operands into the expressionHead --- */
 		}else if(curr->type==1){
 			if(curr->element.opt.symbol=='('){
-				/* --- Pushing left paranthesis into stackTop --- */
-				push(&stackTop, createCharNode(curr->element.opt.symbol));
+				push(&stackTop, createCharNode(curr->element.opt.symbol));	/* --- Pushing left paranthesis into stackTop --- */
 			}else if(curr->element.opt.symbol==')'){
 				/* --- Popping from stackTop and pushing to expressionHead until left paranthesis --- */
 				
@@ -173,21 +171,25 @@ node* postfix(node* infixHead){
 					append(&expressionHead, pop(&stackTop));
 				}
 
-				free(pop(&stackTop));		/* --- left paranthesis removed  --- */
+//				free(pop(&stackTop));		/* --- left paranthesis removed  --- */
+				pop(&stackTop);		/* --- left paranthesis removed  --- */
 			}else{
-				while(stackTop!=NULL && stackTop->element.opt.precedence>=curr->element.opt.precedence){
+				while(stackTop!=NULL && stackTop->element.opt.symbol != '(' && stackTop->element.opt.precedence>=curr->element.opt.precedence){
 					append(&expressionHead, pop(&stackTop));
 				}
 				push(&stackTop, createCharNode(curr->element.opt.symbol));
 			}
 		}
+		node* temp=stackTop;
+		// while(temp!=NULL){
+		// printf("Stack: %c\n", temp->element.opt.symbol);
+		// }
 		curr=curr->next;
 	}
 	
-	while(stackTop != NULL){
-    	append(&expressionHead, pop(&stackTop));
-	}
-
+//	while(stackTop!=NULL && stackTop->element.opt.symbol!='('){
+//    	append(&expressionHead, pop(&stackTop));
+//	}
 	
 	return expressionHead;
 }
